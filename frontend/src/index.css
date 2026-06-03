@@ -2,14 +2,59 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  margin: 0;
-  min-height: 100vh;
-  background-color: #f3f4f6;
-  color: #111827;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-}
+@layer base {
+  :root {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8fafc; /* slate-50 */
+    --bg-tertiary: #f1f5f9; /* slate-100 */
+    --text-primary: #0f172a; /* slate-900 */
+    --text-secondary: #475569; /* slate-600 */
+    --border-color: #e2e8f0; /* slate-200 */
+    --accent-primary: #4f46e5; /* indigo-600 */
+    --accent-hover: #4338ca; /* indigo-700 */
+    --success: #10b981; /* emerald-500 */
+    --danger: #ef4444; /* red-500 */
+    --warning: #f59e0b; /* amber-500 */
+    --font-sans: 'Inter', system-ui, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  }
 
-#root {
-  min-height: 100vh;
+  .dark {
+    --bg-primary: #020617; /* slate-950 */
+    --bg-secondary: #0f172a; /* slate-900 */
+    --bg-tertiary: #1e293b; /* slate-800 */
+    --text-primary: #f8fafc; /* slate-50 */
+    --text-secondary: #94a3b8; /* slate-400 */
+    --border-color: #1e293b; /* slate-800 */
+    --accent-primary: #6366f1; /* indigo-500 */
+    --accent-hover: #818cf8; /* indigo-400 */
+    --success: #10b981; /* emerald-500 */
+    --danger: #ef4444; /* red-500 */
+    --warning: #f59e0b; /* amber-500 */
+  }
+
+  .matrix {
+    --bg-primary: #000000;
+    --bg-secondary: #050505;
+    --bg-tertiary: #0a0a0a;
+    --text-primary: #00ff00; /* neon green */
+    --text-secondary: #008800; /* darker green */
+    --border-color: #003300;
+    --accent-primary: #00ff00;
+    --accent-hover: #33ff33;
+    --success: #00ff00;
+    --danger: #ff0000;
+    --warning: #ffff00;
+    --font-sans: 'Fira Code', 'Courier New', monospace; /* mono everything */
+  }
+
+  body {
+    @apply bg-primary text-primary transition-colors duration-300 antialiased font-sans;
+    margin: 0;
+    min-height: 100vh;
+  }
+
+  #root {
+    min-height: 100vh;
+  }
 }

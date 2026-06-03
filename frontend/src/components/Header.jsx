@@ -1,107 +1,78 @@
-import { useState } from "react";
-import { useTranslation } from "react-i18next";
-import { motion, AnimatePresence } from "framer-motion";
-import { Moon, Sun, ChevronRight, Check } from "lucide-react";
-import { useTheme } from "../context/ThemeContext.jsx";
 import { useLocation } from "react-router-dom";
+import { useTheme } from "../context/ThemeContext";
+import { ChevronRight, Sun, Moon, Terminal, Bell } from "lucide-react";
+import { useState } from "react";
 
 const Header = () => {
-  const { t, i18n } = useTranslation();
-  const { theme, toggleTheme } = useTheme();
+  const { theme, setSpecificTheme } = useTheme();
   const location = useLocation();
-  const [langMenuOpen, setLangMenuOpen] = useState(false);
+  const [isThemeMenuOpen, setIsThemeMenuOpen] = useState(false);
 
-  const breadcrumbs = [
-    { name: "VRT", path: "/" },
-    ...location.pathname
-      .split("/")
-      .filter((p) => p)
-      .map((path, idx, arr) => ({
-        name: path.charAt(0).toUpperCase() + path.slice(1),
-        path: `/${arr.slice(0, idx + 1).join("/")}`
-      }))
-  ];
-
-  const toggleLang = (lng) => {
-    i18n.changeLanguage(lng);
-    setLangMenuOpen(false);
-  };
+  // Generate breadcrumbs from path
+  const paths = location.pathname.split("/").filter(Boolean);
+  let breadcrumbs = ["Dashboard"];
+  if (paths.length > 0) {
+    if (paths[0] === "project") breadcrumbs = ["Projects", `Project #${paths[1]}`, "Overview"];
+    if (paths[0] === "run") breadcrumbs = ["Projects", "E-commerce App", `Run #${paths[1]}`];
+    if (paths[0] === "settings") breadcrumbs = ["Settings"];
+  }
 
   return (
-    <header className="sticky top-0 z-40 flex h-16 w-full items-center justify-between border-b border-gray-200 bg-white/70 px-6 backdrop-blur-md transition-colors dark:border-gray-800 dark:bg-gray-950/70">
-      <nav className="flex items-center text-sm font-medium text-gray-500 dark:text-gray-400">
+    <header className="h-16 border-b border-border bg-primary flex items-center justify-between px-6 shrink-0">
+      <div className="flex items-center text-sm font-medium text-secondary">
         {breadcrumbs.map((crumb, idx) => (
-          <div key={crumb.path} className="flex items-center">
-            {idx > 0 && <ChevronRight className="mx-2 h-4 w-4 flex-shrink-0 text-gray-400 dark:text-gray-600" />}
-            <span className={idx === breadcrumbs.length - 1 ? "text-gray-950 dark:text-gray-100" : ""}>{crumb.name}</span>
+          <div key={idx} className="flex items-center">
+            {idx > 0 && <ChevronRight className="w-4 h-4 mx-2 text-border" />}
+            <span className={idx === breadcrumbs.length - 1 ? "text-primary" : "hover:text-primary cursor-pointer transition-colors"}>
+              {crumb}
+            </span>
           </div>
         ))}
-      </nav>
+      </div>
 
       <div className="flex items-center gap-4">
+        <button className="text-secondary hover:text-primary transition-colors relative">
+          <Bell className="w-5 h-5" />
+          <span className="absolute top-0 right-0 w-2 h-2 bg-danger rounded-full ring-2 ring-primary"></span>
+        </button>
+
         <div className="relative">
-          <button
-            onClick={() => setLangMenuOpen(!langMenuOpen)}
-            className="flex h-9 items-center gap-2 rounded-xl bg-gray-100 px-3 text-sm font-bold uppercase text-gray-700 transition hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+          <button 
+            onClick={() => setIsThemeMenuOpen(!isThemeMenuOpen)}
+            className="flex items-center justify-center w-8 h-8 rounded-md bg-tertiary border border-border text-secondary hover:text-primary transition-colors"
           >
-            {i18n.language.split("-")[0]}
+            {theme === "light" && <Sun className="w-4 h-4" />}
+            {theme === "dark" && <Moon className="w-4 h-4" />}
+            {theme === "matrix" && <Terminal className="w-4 h-4" />}
           </button>
           
-          <AnimatePresence>
-            {langMenuOpen && (
-              <motion.div
-                initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                transition={{ duration: 0.15 }}
-                className="absolute right-0 mt-2 w-32 origin-top-right overflow-hidden rounded-xl border border-gray-200 bg-white p-1 shadow-xl dark:border-gray-800 dark:bg-gray-900"
+          {isThemeMenuOpen && (
+            <div className="absolute right-0 mt-2 w-36 bg-primary border border-border rounded-md shadow-lg py-1 z-50">
+              <button 
+                onClick={() => { setSpecificTheme("light"); setIsThemeMenuOpen(false); }}
+                className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-secondary ${theme === 'light' ? 'text-accent' : 'text-primary'}`}
               >
-                {[
-                  { code: "ru", label: "Русский" },
-                  { code: "en", label: "English" }
-                ].map((lang) => (
-                  <button
-                    key={lang.code}
-                    onClick={() => toggleLang(lang.code)}
-                    className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
-                  >
-                    {lang.label}
-                    {i18n.language.startsWith(lang.code) && <Check className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />}
-                  </button>
-                ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
+                <Sun className="w-4 h-4" /> Light
+              </button>
+              <button 
+                onClick={() => { setSpecificTheme("dark"); setIsThemeMenuOpen(false); }}
+                className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-secondary ${theme === 'dark' ? 'text-accent' : 'text-primary'}`}
+              >
+                <Moon className="w-4 h-4" /> Dark
+              </button>
+              <button 
+                onClick={() => { setSpecificTheme("matrix"); setIsThemeMenuOpen(false); }}
+                className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-secondary ${theme === 'matrix' ? 'text-accent' : 'text-primary'}`}
+              >
+                <Terminal className="w-4 h-4" /> Matrix
+              </button>
+            </div>
+          )}
         </div>
 
-        <button
-          onClick={toggleTheme}
-          className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gray-100 text-gray-700 transition hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-        >
-          <AnimatePresence mode="wait" initial={false}>
-            {theme === "dark" ? (
-              <motion.div
-                key="moon"
-                initial={{ rotate: -90, opacity: 0 }}
-                animate={{ rotate: 0, opacity: 1 }}
-                exit={{ rotate: 90, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-              >
-                <Moon className="h-4 w-4" />
-              </motion.div>
-            ) : (
-              <motion.div
-                key="sun"
-                initial={{ rotate: 90, opacity: 0 }}
-                animate={{ rotate: 0, opacity: 1 }}
-                exit={{ rotate: -90, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-              >
-                <Sun className="h-4 w-4" />
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </button>
+        <div className="w-8 h-8 rounded-full bg-accent text-white flex items-center justify-center font-semibold text-sm cursor-pointer shadow-md">
+          AJ
+        </div>
       </div>
     </header>
   );

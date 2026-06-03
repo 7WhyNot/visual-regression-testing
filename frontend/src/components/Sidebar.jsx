@@ -1,57 +1,62 @@
-import { Link, useLocation } from "react-router-dom";
-import { useTranslation } from "react-i18next";
-import { LayoutDashboard, Settings, FileText } from "lucide-react";
+import { NavLink } from "react-router-dom";
+import { LayoutDashboard, FolderKanban, PlaySquare, Server, Settings } from "lucide-react";
 import { motion } from "framer-motion";
+import Logo from "./Logo";
+
+const navItems = [
+  { name: "Dashboard", path: "/", icon: LayoutDashboard },
+  { name: "Projects", path: "/project/1", icon: FolderKanban },
+  { name: "Test Runs", path: "/run/1", icon: PlaySquare },
+  { name: "Environments", path: "/environments", icon: Server },
+  { name: "Settings", path: "/settings", icon: Settings },
+];
 
 const Sidebar = () => {
-  const { t } = useTranslation();
-  const location = useLocation();
-
-  const navItems = [
-    { id: "projects", path: "/", icon: LayoutDashboard, label: t("nav.projects") },
-    { id: "reports", path: "/reports", icon: FileText, label: t("nav.reports") },
-    { id: "settings", path: "/settings", icon: Settings, label: t("nav.settings") }
-  ];
-
   return (
-    <aside className="flex h-screen w-64 flex-col border-r border-gray-200 bg-gray-50/50 transition-colors dark:border-gray-800 dark:bg-gray-900/50">
-      <div className="flex h-16 items-center px-6">
-        <span className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-xl font-black tracking-tight text-transparent">
-          VRT Platform
-        </span>
+    <aside className="w-64 h-screen border-r border-border bg-secondary flex flex-col shrink-0">
+      <div className="p-6 border-b border-border">
+        <Logo />
       </div>
-
-      <nav className="flex-1 space-y-1 px-4 py-4">
-        {navItems.map((item) => {
-          const isActive = location.pathname === item.path || (item.path !== "/" && location.pathname.startsWith(item.path));
-          const Icon = item.icon;
-
-          return (
-            <Link
-              key={item.id}
-              to={item.path}
-              className={`group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors ${
-                isActive ? "text-indigo-600 dark:text-indigo-400" : "text-gray-600 hover:text-gray-950 dark:text-gray-400 dark:hover:text-gray-100"
-              }`}
-            >
-              {isActive && (
-                <motion.div
-                  layoutId="sidebar-active"
-                  className="absolute inset-0 rounded-xl bg-indigo-50 shadow-[0_0_15px_rgba(99,102,241,0.5)] dark:bg-indigo-500/10"
-                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                />
-              )}
-              
-              <div className="relative z-10 flex items-center gap-3">
-                <motion.div whileHover={{ y: -2 }} transition={{ type: "spring", stiffness: 400 }}>
-                  <Icon className="h-5 w-5" />
-                </motion.div>
-                <span>{item.label}</span>
-              </div>
-            </Link>
-          );
-        })}
+      
+      <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+        {navItems.map((item) => (
+          <NavLink
+            key={item.path}
+            to={item.path}
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3 py-2 rounded-md transition-all duration-200 relative group ${
+                isActive ? "text-accent" : "text-secondary hover:text-primary hover:bg-tertiary"
+              }`
+            }
+          >
+            {({ isActive }) => (
+              <>
+                <item.icon className={`w-5 h-5 ${isActive ? "text-accent" : "group-hover:text-primary"}`} />
+                <span className="font-medium text-sm">{item.name}</span>
+                {isActive && (
+                  <motion.div
+                    layoutId="active-sidebar-pill"
+                    className="absolute inset-0 bg-accent/10 rounded-md -z-10"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.2 }}
+                  />
+                )}
+              </>
+            )}
+          </NavLink>
+        ))}
       </nav>
+      
+      <div className="p-4 border-t border-border">
+        <div className="bg-tertiary rounded-lg p-4 text-sm border border-border">
+          <p className="text-secondary mb-2">Plan: <span className="text-primary font-semibold">Pro</span></p>
+          <div className="w-full bg-border h-1.5 rounded-full overflow-hidden">
+            <div className="bg-accent h-full w-[82%]" />
+          </div>
+          <p className="text-xs text-secondary mt-2">82k / 100k snapshots used</p>
+        </div>
+      </div>
     </aside>
   );
 };

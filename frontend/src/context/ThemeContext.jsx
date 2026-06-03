@@ -6,7 +6,7 @@ export const ThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("theme");
-      if (saved) return saved;
+      if (saved && ["light", "dark", "matrix"].includes(saved)) return saved;
       return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
     }
     return "light";
@@ -14,19 +14,28 @@ export const ThemeProvider = ({ children }) => {
 
   useEffect(() => {
     const root = window.document.documentElement;
-    if (theme === "dark") {
-      root.classList.add("dark");
-    } else {
-      root.classList.remove("dark");
+    root.classList.remove("light", "dark", "matrix");
+    if (theme !== "light") {
+      root.classList.add(theme);
     }
     localStorage.setItem("theme", theme);
   }, [theme]);
 
   const toggleTheme = () => {
-    setTheme((prev) => (prev === "light" ? "dark" : "light"));
+    setTheme((prev) => {
+      if (prev === "light") return "dark";
+      if (prev === "dark") return "matrix";
+      return "light";
+    });
   };
 
-  return <ThemeContext.Provider value={{ theme, toggleTheme }}>{children}</ThemeContext.Provider>;
+  const setSpecificTheme = (newTheme) => {
+    if (["light", "dark", "matrix"].includes(newTheme)) {
+      setTheme(newTheme);
+    }
+  };
+
+  return <ThemeContext.Provider value={{ theme, toggleTheme, setSpecificTheme }}>{children}</ThemeContext.Provider>;
 };
 
 export const useTheme = () => {

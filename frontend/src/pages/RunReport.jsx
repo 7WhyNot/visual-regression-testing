@@ -1,289 +1,169 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
-import toast from "react-hot-toast";
-import { CheckCircle2, ChevronLeft, Clock, Filter, Layers, LayoutGrid, XCircle } from "lucide-react";
-import { useTranslation } from "react-i18next";
-import { getRunReport, reviewTest } from "../api.js";
-import DiffViewer from "../components/DiffViewer.jsx";
-
-const formatNumber = (value) => new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 2 }).format(value || 0);
+import { useState } from "react";
+import { Check, X, Columns, Layers, SlidersHorizontal, Image as ImageIcon, Info } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 const RunReport = () => {
-  const { t } = useTranslation();
-  const { id } = useParams();
-  const [report, setReport] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [reviewing, setReviewing] = useState(false);
-  const [error, setError] = useState("");
-  const [filter, setFilter] = useState("all");
-  const [expandedId, setExpandedId] = useState(null);
-
-  const loadReport = async () => {
-    try {
-      setLoading(true);
-      const data = await getRunReport(id);
-      setReport(data);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadReport();
-  }, [id]);
-
-  const handleReview = async (resultId, status) => {
-    try {
-      setReviewing(true);
-      await reviewTest(resultId, { status });
-      toast.success(status === "PASSED" ? t("report.acceptStd") : t("report.markBug"));
-      await loadReport();
-    } catch (err) {
-      toast.error(err.message);
-    } finally {
-      setReviewing(false);
-    }
-  };
-
-  const handleBulkReview = async (status) => {
-    try {
-      setReviewing(true);
-      const failedResults = report.results.filter((r) => r.status === "FAILED");
-      await Promise.all(failedResults.map((r) => reviewTest(r.id, { status })));
-      toast.success(status === "PASSED" ? t("report.approveAll") : t("report.rejectAll"));
-      await loadReport();
-    } catch (err) {
-      toast.error(err.message);
-    } finally {
-      setReviewing(false);
-    }
-  };
-
-  const filteredResults = useMemo(() => {
-    if (!report) return [];
-    if (filter === "failed") return report.results.filter((r) => r.status === "FAILED");
-    if (filter === "passed") return report.results.filter((r) => r.status === "PASSED");
-    return report.results;
-  }, [report, filter]);
-
-  const stats = useMemo(() => {
-    if (!report) return { total: 0, passed: 0, failed: 0, percent: 0, duration: 0 };
-    const passed = report.results.filter((r) => r.status === "PASSED").length;
-    const failed = report.results.filter((r) => r.status === "FAILED").length;
-    const total = report.results.length;
-    const percent = total === 0 ? 100 : (passed / total) * 100;
-    let duration = 0;
-    if (report.testRun.completedAt && report.testRun.createdAt) {
-      duration = Math.round((new Date(report.testRun.completedAt) - new Date(report.testRun.createdAt)) / 1000);
-    }
-    return { total, passed, failed, percent, duration };
-  }, [report]);
-
-  const hasFailed = stats.failed > 0;
-
-  if (loading) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-200 border-t-indigo-600 dark:border-indigo-900 dark:border-t-indigo-400"></div>
-      </div>
-    );
-  }
-
-  if (error || !report) {
-    return (
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl border border-red-200 bg-red-50 p-8 text-center shadow-lg dark:border-red-900/50 dark:bg-red-900/20">
-        <XCircle className="mx-auto h-12 w-12 text-red-500 dark:text-red-400" />
-        <h3 className="mt-4 text-lg font-bold text-red-900 dark:text-red-300">Ошибка загрузки отчета</h3>
-        <p className="mt-2 text-sm text-red-700 dark:text-red-400">{error || "Отчет не найден"}</p>
-      </motion.div>
-    );
-  }
+  const [viewMode, setViewMode] = useState("side-by-side"); // side-by-side, overlay, swipe, diff
+  const [swipePosition, setSwipePosition] = useState(50);
+  
+  // Dummy image placeholders with distinct colors for diffing visualization
+  const baselineImg = "https://placehold.co/800x600/1e293b/ffffff?text=Baseline+UI";
+  const currentImg = "https://placehold.co/800x600/0f172a/f8fafc?text=Current+UI+(Changes)";
+  const diffImg = "https://placehold.co/800x600/ef4444/ffffff?text=Diff+Highlight";
 
   return (
-    <div className="relative min-h-screen pb-32">
-      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-8 rounded-3xl border border-gray-200/80 bg-white/50 p-6 shadow-xl shadow-gray-200/40 backdrop-blur-xl dark:border-gray-800/80 dark:bg-gray-950/50 dark:shadow-none">
-        <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-          <div>
-            <Link to={`/project/${report.project.id}`} className="inline-flex items-center gap-1 text-sm font-semibold text-gray-500 transition hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400">
-              <ChevronLeft className="h-4 w-4" /> {t("report.back")} {report.project.name}
-            </Link>
-            <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-gray-950 dark:text-gray-100">{t("report.reportOf")} <span className="text-gray-400">#{id.slice(0, 8)}</span></h1>
+    <div className="flex flex-col h-full -m-6"> {/* Negative margin to expand to layout edges */}
+      {/* Top Bar */}
+      <div className="bg-primary border-b border-border p-4 flex items-center justify-between shrink-0 sticky top-0 z-20 shadow-sm">
+        <div>
+          <div className="flex items-center gap-3">
+            <h1 className="text-xl font-bold text-primary">SC-01: Homepage Hero Section</h1>
+            <span className="bg-danger/10 text-danger border border-danger/20 text-xs px-2 py-0.5 rounded-full font-medium">Failed</span>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 rounded-xl bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 dark:bg-gray-900 dark:text-gray-300">
-              <Clock className="h-4 w-4 text-gray-400" />
-              {stats.duration} {t("report.sec")}
-            </div>
-            <div className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold ${stats.percent === 100 ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"}`}>
-              {stats.percent === 100 ? <CheckCircle2 className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
-              {stats.percent === 100 ? t("report.success") : t("report.changes")}
-            </div>
+          <div className="text-sm text-secondary mt-1 flex items-center gap-4">
+            <span>Run #1044</span>
+            <span>Resolution: 1920x1080</span>
+            <span>Diff: <span className="text-danger font-mono font-medium">1.2%</span> (Threshold: 0.1%)</span>
           </div>
         </div>
-
-        <div className="mt-8">
-          <div className="mb-2 flex items-center justify-between text-sm font-bold text-gray-700 dark:text-gray-300">
-            <span>{t("report.progress")}</span>
-            <span>{Math.round(stats.percent)}%</span>
-          </div>
-          <div className="h-3 overflow-hidden rounded-full bg-gray-100 ring-1 ring-inset ring-gray-950/5 dark:bg-gray-900 dark:ring-white/5">
-            <motion.div 
-              initial={{ width: 0 }} 
-              animate={{ width: `${stats.percent}%` }} 
-              transition={{ duration: 1, ease: "easeOut" }} 
-              className={`h-full rounded-full ${stats.percent === 100 ? "bg-gradient-to-r from-emerald-400 to-emerald-500 dark:from-emerald-500 dark:to-emerald-600" : "bg-gradient-to-r from-red-400 to-red-500 dark:from-red-500 dark:to-red-600"}`} 
-            />
-          </div>
-          <div className="mt-3 flex gap-6 text-sm font-medium text-gray-500 dark:text-gray-400">
-            <span className="flex items-center gap-1.5"><div className="h-2 w-2 rounded-full bg-gray-300 dark:bg-gray-700"></div>{t("report.total")}: {stats.total}</span>
-            <span className="flex items-center gap-1.5"><div className="h-2 w-2 rounded-full bg-emerald-500 dark:bg-emerald-600"></div>{t("report.passed")}: {stats.passed}</span>
-            <span className="flex items-center gap-1.5"><div className="h-2 w-2 rounded-full bg-red-500 dark:bg-red-600"></div>{t("report.failed")}: {stats.failed}</span>
-          </div>
-        </div>
-      </motion.div>
-
-      <div className="mb-6 flex items-center gap-2">
-        <Filter className="mr-2 h-5 w-5 text-gray-400" />
-        {[
-          { id: "all", label: t("report.allTests") }, 
-          { id: "failed", label: t("report.onlyFailed") }, 
-          { id: "passed", label: t("report.onlyPassed") }
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setFilter(tab.id)}
-            className={`rounded-xl px-4 py-2 text-sm font-bold transition-all ${filter === tab.id ? "bg-gray-950 text-white shadow-md dark:bg-white dark:text-gray-950" : "bg-white text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"}`}
-          >
-            {tab.label}
+        
+        <div className="flex items-center gap-3">
+          <button className="px-4 py-2 bg-primary border border-danger text-danger rounded-md text-sm font-medium hover:bg-danger hover:text-white transition-colors flex items-center gap-2">
+            <X className="w-4 h-4" /> Mark as Bug
           </button>
-        ))}
+          <button className="px-4 py-2 bg-success text-white rounded-md text-sm font-medium hover:bg-emerald-600 transition-colors flex items-center gap-2 shadow-sm shadow-success/20">
+            <Check className="w-4 h-4" /> Approve as Baseline
+          </button>
+        </div>
       </div>
 
-      <div className="space-y-4">
-        <AnimatePresence mode="popLayout">
-          {filteredResults.map((result) => {
-            const isExpanded = expandedId === result.id;
-            const isPassed = result.status === "PASSED";
-            
-            return (
-              <motion.div
-                layout
-                key={result.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className={`overflow-hidden rounded-2xl border transition-colors ${isExpanded ? "border-indigo-200 bg-white shadow-2xl shadow-indigo-100/50 dark:border-indigo-800 dark:bg-gray-950 dark:shadow-none" : "border-gray-200 bg-white hover:border-gray-300 dark:border-gray-800 dark:bg-gray-950 dark:hover:border-gray-700"}`}
-              >
-                <button
-                  onClick={() => setExpandedId(isExpanded ? null : result.id)}
-                  className="flex w-full items-center justify-between p-5 text-left transition-colors hover:bg-gray-50/50 dark:hover:bg-gray-900/50"
-                >
-                  <div className="flex items-center gap-6">
-                    <div className="relative h-16 w-24 overflow-hidden rounded-lg bg-gray-100 ring-1 ring-inset ring-gray-950/10 dark:bg-gray-900 dark:ring-white/10">
-                      {(result.currentUrl || result.baselineUrl) ? (
-                        <img src={result.currentUrl || result.baselineUrl} className="h-full w-full object-cover" />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center"><LayoutGrid className="h-6 w-6 text-gray-300 dark:text-gray-700" /></div>
-                      )}
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-gray-950 dark:text-gray-100">{result.scenario?.name || "Scenario"}</h3>
-                      <div className="mt-1 flex items-center gap-3 text-sm font-medium text-gray-500 dark:text-gray-400">
-                        <span className="truncate max-w-[300px] text-indigo-600 dark:text-indigo-400">{result.scenario?.targetUrl}</span>
-                        <span className="h-1 w-1 rounded-full bg-gray-300 dark:bg-gray-700"></span>
-                        <span>{result.scenario?.width} × {result.scenario?.height}</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-6">
-                    <div className="text-right">
-                      <div className="text-sm font-bold text-gray-900 dark:text-gray-100">{formatNumber(result.mismatchPercentage)}%</div>
-                      <div className="text-xs font-medium text-gray-400">{t("report.mismatch")}</div>
-                    </div>
-                    <span className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider ${isPassed ? "bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:ring-emerald-800/50" : "bg-red-50 text-red-700 ring-1 ring-inset ring-red-200 dark:bg-red-900/30 dark:text-red-400 dark:ring-red-800/50"}`}>
-                      {isPassed ? <CheckCircle2 className="h-3.5 w-3.5" /> : <XCircle className="h-3.5 w-3.5" />}
-                      {result.status}
-                    </span>
-                  </div>
-                </button>
+      {/* Toolbar */}
+      <div className="bg-secondary border-b border-border p-2 flex justify-center shrink-0">
+        <div className="bg-primary border border-border rounded-lg p-1 flex gap-1 shadow-sm">
+          <button 
+            onClick={() => setViewMode("side-by-side")}
+            className={`px-3 py-1.5 rounded-md text-sm font-medium flex items-center gap-2 transition-colors ${viewMode === 'side-by-side' ? 'bg-secondary text-primary shadow-sm border border-border/50' : 'text-secondary hover:text-primary'}`}
+          >
+            <Columns className="w-4 h-4" /> Side by Side
+          </button>
+          <button 
+            onClick={() => setViewMode("overlay")}
+            className={`px-3 py-1.5 rounded-md text-sm font-medium flex items-center gap-2 transition-colors ${viewMode === 'overlay' ? 'bg-secondary text-primary shadow-sm border border-border/50' : 'text-secondary hover:text-primary'}`}
+          >
+            <Layers className="w-4 h-4" /> Overlay
+          </button>
+          <button 
+            onClick={() => setViewMode("swipe")}
+            className={`px-3 py-1.5 rounded-md text-sm font-medium flex items-center gap-2 transition-colors ${viewMode === 'swipe' ? 'bg-secondary text-primary shadow-sm border border-border/50' : 'text-secondary hover:text-primary'}`}
+          >
+            <SlidersHorizontal className="w-4 h-4" /> Swipe
+          </button>
+          <button 
+            onClick={() => setViewMode("diff")}
+            className={`px-3 py-1.5 rounded-md text-sm font-medium flex items-center gap-2 transition-colors ${viewMode === 'diff' ? 'bg-danger/10 text-danger shadow-sm border border-danger/20' : 'text-secondary hover:text-danger'}`}
+          >
+            <ImageIcon className="w-4 h-4" /> Diff Highlight
+          </button>
+        </div>
+      </div>
 
-                <AnimatePresence>
-                  {isExpanded && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      className="border-t border-gray-100 bg-gray-50/30 dark:border-gray-800 dark:bg-gray-900/30"
-                    >
-                      <div className="p-5">
-                        <DiffViewer
-                          baselineUrl={result.baselineUrl}
-                          currentUrl={result.currentUrl}
-                          diffUrl={result.diffUrl}
-                          onAccept={() => handleReview(result.id, "PASSED")}
-                          onReject={() => handleReview(result.id, "FAILED")}
-                        />
-                        
-                        <div className="mt-4 flex justify-end gap-3">
-                          <button
-                            onClick={() => handleReview(result.id, "PASSED")}
-                            disabled={reviewing}
-                            className="flex h-11 items-center gap-2 rounded-xl bg-emerald-600 px-6 text-sm font-bold text-white shadow-lg shadow-emerald-600/20 transition-all hover:-translate-y-0.5 hover:bg-emerald-500 hover:shadow-xl hover:shadow-emerald-600/30 disabled:opacity-50 dark:shadow-emerald-900/20"
-                          >
-                            <CheckCircle2 className="h-4 w-4" /> {t("report.acceptStd")}
-                          </button>
-                          <button
-                            onClick={() => handleReview(result.id, "FAILED")}
-                            disabled={reviewing}
-                            className="flex h-11 items-center gap-2 rounded-xl bg-red-600 px-6 text-sm font-bold text-white shadow-lg shadow-red-600/20 transition-all hover:-translate-y-0.5 hover:bg-red-500 hover:shadow-xl hover:shadow-red-600/30 disabled:opacity-50 dark:shadow-red-900/20"
-                          >
-                            <XCircle className="h-4 w-4" /> {t("report.markBug")}
-                          </button>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.div>
-            );
-          })}
+      {/* Viewer Area */}
+      <div className="flex-1 bg-[url('https://transparenttextures.com/patterns/cubes.png')] dark:bg-[url('https://transparenttextures.com/patterns/carbon-fibre.png')] bg-tertiary overflow-auto p-8 flex items-center justify-center relative">
+        <AnimatePresence mode="wait">
+          {viewMode === "side-by-side" && (
+            <motion.div 
+              key="side-by-side"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="flex gap-8 items-start justify-center w-full max-w-7xl"
+            >
+              <div className="flex-1 bg-primary border border-border rounded-lg shadow-lg overflow-hidden">
+                <div className="bg-secondary border-b border-border px-4 py-2 text-sm font-medium text-secondary flex items-center justify-between">
+                  Baseline
+                  <span className="text-xs font-mono bg-tertiary px-2 py-0.5 rounded border border-border">master (2 days ago)</span>
+                </div>
+                <img src={baselineImg} alt="Baseline" className="w-full object-cover" />
+              </div>
+              <div className="flex-1 bg-primary border border-border rounded-lg shadow-lg overflow-hidden ring-2 ring-danger/50">
+                <div className="bg-danger/5 border-b border-danger/20 px-4 py-2 text-sm font-medium text-danger flex items-center justify-between">
+                  Current
+                  <span className="text-xs font-mono bg-danger/10 px-2 py-0.5 rounded border border-danger/20">feature/header (now)</span>
+                </div>
+                <img src={currentImg} alt="Current" className="w-full object-cover" />
+              </div>
+            </motion.div>
+          )}
+
+          {viewMode === "overlay" && (
+            <motion.div 
+              key="overlay"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="relative max-w-4xl bg-primary border border-border rounded-lg shadow-lg overflow-hidden"
+            >
+              <img src={baselineImg} alt="Baseline" className="w-full object-cover opacity-50 absolute inset-0 mix-blend-difference" />
+              <img src={currentImg} alt="Current" className="w-full object-cover opacity-50" />
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-primary/90 backdrop-blur-sm border border-border text-primary text-xs px-3 py-1.5 rounded-full flex items-center gap-2 shadow-lg">
+                <Info className="w-4 h-4 text-accent" />
+                Overlay mode blends both images.
+              </div>
+            </motion.div>
+          )}
+
+          {viewMode === "swipe" && (
+            <motion.div 
+              key="swipe"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="relative max-w-4xl bg-primary border border-border rounded-lg shadow-lg overflow-hidden cursor-ew-resize select-none"
+              onMouseMove={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+                setSwipePosition((x / rect.width) * 100);
+              }}
+            >
+              <img src={baselineImg} alt="Baseline" className="w-full object-cover" />
+              <div 
+                className="absolute top-0 bottom-0 left-0 overflow-hidden border-r-2 border-accent"
+                style={{ width: `${swipePosition}%` }}
+              >
+                <img src={currentImg} alt="Current" className="max-w-none h-full object-cover" style={{ width: '100vw', maxWidth: '896px' }} />
+              </div>
+              <div 
+                className="absolute top-1/2 -translate-y-1/2 w-8 h-8 bg-accent rounded-full text-white flex items-center justify-center shadow-lg -ml-4"
+                style={{ left: `${swipePosition}%` }}
+              >
+                <SlidersHorizontal className="w-4 h-4 rotate-90" />
+              </div>
+              <div className="absolute top-4 left-4 bg-primary/90 text-primary text-xs px-2 py-1 rounded border border-border backdrop-blur">Current</div>
+              <div className="absolute top-4 right-4 bg-primary/90 text-primary text-xs px-2 py-1 rounded border border-border backdrop-blur">Baseline</div>
+            </motion.div>
+          )}
+
+          {viewMode === "diff" && (
+            <motion.div 
+              key="diff"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="relative max-w-4xl bg-primary border border-danger/50 rounded-lg shadow-lg overflow-hidden ring-4 ring-danger/10"
+            >
+              <img src={diffImg} alt="Diff" className="w-full object-cover" />
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-primary/90 backdrop-blur-sm border border-border text-primary text-xs px-3 py-1.5 rounded-full flex items-center gap-2 shadow-lg">
+                <div className="w-3 h-3 bg-danger rounded-full"></div>
+                Red areas indicate pixel mismatches
+              </div>
+            </motion.div>
+          )}
         </AnimatePresence>
       </div>
-
-      <AnimatePresence>
-        {hasFailed && (
-          <motion.div
-            initial={{ y: 100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 100, opacity: 0 }}
-            transition={{ type: "spring", bounce: 0.2 }}
-            className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-4 rounded-full border border-gray-200/50 bg-white/80 px-6 py-4 shadow-2xl backdrop-blur-xl dark:border-gray-800 dark:bg-gray-950/80"
-          >
-            <div className="flex items-center gap-2 pr-4 border-r border-gray-200 dark:border-gray-800">
-              <Layers className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-              <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{t("report.foundErrors")} {stats.failed}</span>
-            </div>
-            <button
-              onClick={() => handleBulkReview("PASSED")}
-              disabled={reviewing}
-              className="rounded-xl bg-emerald-100 px-4 py-2 text-sm font-bold text-emerald-800 transition hover:bg-emerald-200 disabled:opacity-50 dark:bg-emerald-900/40 dark:text-emerald-400 dark:hover:bg-emerald-900/60"
-            >
-              {t("report.approveAll")}
-            </button>
-            <button
-              onClick={() => handleBulkReview("FAILED")}
-              disabled={reviewing}
-              className="rounded-xl bg-red-100 px-4 py-2 text-sm font-bold text-red-800 transition hover:bg-red-200 disabled:opacity-50 dark:bg-red-900/40 dark:text-red-400 dark:hover:bg-red-900/60"
-            >
-              {t("report.rejectAll")}
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };

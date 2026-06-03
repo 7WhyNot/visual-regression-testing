@@ -7,19 +7,19 @@ const Layout = ({ children }) => {
   const location = useLocation();
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-white text-gray-900 transition-colors dark:bg-gray-950 dark:text-gray-100">
+    <div className="flex h-screen w-full overflow-hidden bg-primary text-primary transition-colors duration-300">
       <Sidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header />
-        <main className="flex-1 overflow-auto bg-gray-50/30 p-6 dark:bg-gray-900/20">
+        <main className="flex-1 overflow-auto bg-secondary p-6 relative">
           <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.98 }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.3, ease: "easeInOut" }}
-              className="mx-auto max-w-7xl"
+              className="mx-auto max-w-7xl w-full h-full"
             >
               {children}
             </motion.div>
