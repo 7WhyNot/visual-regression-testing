@@ -33,11 +33,13 @@ model TestScenario {
   projectId   String
   name        String
   targetUrl   String
-  width       Int
-  height      Int
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  width            Int
+  height           Int
+  ignoredSelectors String[]     @default([])
+  threshold        Float        @default(0.1)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  project          Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
   testResults TestResult[]
 
   @@index([projectId])
@@ -64,6 +66,7 @@ model TestResult {
   currentUrl         String?
   diffUrl            String?
   mismatchPercentage Float            @default(0.0)
+  errorMessage       String?
   createdAt          DateTime         @default(now())
   testRun            TestRun          @relation(fields: [testRunId], references: [id], onDelete: Cascade)
   testScenario       TestScenario     @relation(fields: [testScenarioId], references: [id], onDelete: Cascade)

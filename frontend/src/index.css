@@ -33,21 +33,6 @@
     --warning: #f59e0b; /* amber-500 */
   }
 
-  .matrix {
-    --bg-primary: #000000;
-    --bg-secondary: #050505;
-    --bg-tertiary: #0a0a0a;
-    --text-primary: #00ff00; /* neon green */
-    --text-secondary: #008800; /* darker green */
-    --border-color: #003300;
-    --accent-primary: #00ff00;
-    --accent-hover: #33ff33;
-    --success: #00ff00;
-    --danger: #ff0000;
-    --warning: #ffff00;
-    --font-sans: 'Fira Code', 'Courier New', monospace; /* mono everything */
-  }
-
   body {
     @apply bg-primary text-primary transition-colors duration-300 antialiased font-sans;
     margin: 0;

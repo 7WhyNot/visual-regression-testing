@@ -4,8 +4,12 @@ import App from "./App.jsx";
 import "./index.css";
 import "./i18n.js";
 
+import { AppProvider } from "./context/AppContext.jsx";
+
 createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <App />
+    <AppProvider>
+      <App />
+    </AppProvider>
   </React.StrictMode>
 );

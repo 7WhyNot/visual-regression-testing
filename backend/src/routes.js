@@ -8,6 +8,7 @@ import {
 import {
   getTestRun,
   reviewTestResult,
+  bulkReviewTestResults,
   runProjectTests
 } from "./controllers/test.controller.js";
 
@@ -28,6 +29,7 @@ router.get("/projects/:id", validateUuid, getProjectById);
 router.post("/projects/:id/scenarios", validateUuid, createScenario);
 router.post("/projects/:id/run", validateUuid, runProjectTests);
 router.get("/runs/:runId", validateUuid, getTestRun);
+router.post("/results/bulk-review", bulkReviewTestResults);
 router.post("/results/:resultId/review", validateUuid, reviewTestResult);
 
 export default router;

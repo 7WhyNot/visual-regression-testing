@@ -6,7 +6,7 @@ export const ThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("theme");
-      if (saved && ["light", "dark", "matrix"].includes(saved)) return saved;
+      if (saved && ["light", "dark"].includes(saved)) return saved;
       return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
     }
     return "light";
@@ -14,7 +14,7 @@ export const ThemeProvider = ({ children }) => {
 
   useEffect(() => {
     const root = window.document.documentElement;
-    root.classList.remove("light", "dark", "matrix");
+    root.classList.remove("light", "dark");
     if (theme !== "light") {
       root.classList.add(theme);
     }
@@ -24,13 +24,12 @@ export const ThemeProvider = ({ children }) => {
   const toggleTheme = () => {
     setTheme((prev) => {
       if (prev === "light") return "dark";
-      if (prev === "dark") return "matrix";
       return "light";
     });
   };
 
   const setSpecificTheme = (newTheme) => {
-    if (["light", "dark", "matrix"].includes(newTheme)) {
+    if (["light", "dark"].includes(newTheme)) {
       setTheme(newTheme);
     }
   };

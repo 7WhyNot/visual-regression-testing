@@ -57,3 +57,8 @@ export const reviewTest = async (resultId, data) => {
   const response = await api.post(`/results/${resultId}/review`, data);
   return response.data;
 };
+
+export const bulkReviewTests = async (resultIds, status) => {
+  const response = await api.post(`/results/bulk-review`, { resultIds, status });
+  return response.data;
+};

@@ -1,17 +1,17 @@
 import { NavLink } from "react-router-dom";
-import { LayoutDashboard, FolderKanban, PlaySquare, Server, Settings } from "lucide-react";
+import { LayoutDashboard, Settings } from "lucide-react";
 import { motion } from "framer-motion";
 import Logo from "./Logo";
-
-const navItems = [
-  { name: "Dashboard", path: "/", icon: LayoutDashboard },
-  { name: "Projects", path: "/project/1", icon: FolderKanban },
-  { name: "Test Runs", path: "/run/1", icon: PlaySquare },
-  { name: "Environments", path: "/environments", icon: Server },
-  { name: "Settings", path: "/settings", icon: Settings },
-];
+import { useTranslation } from "react-i18next";
 
 const Sidebar = () => {
+  const { t } = useTranslation();
+
+  const navItems = [
+    { name: t("nav.projects"), path: "/", icon: LayoutDashboard },
+    { name: t("nav.settings"), path: "/settings", icon: Settings }
+  ];
+
   return (
     <aside className="w-64 h-screen border-r border-border bg-secondary flex flex-col shrink-0">
       <div className="p-6 border-b border-border">
@@ -47,16 +47,6 @@ const Sidebar = () => {
           </NavLink>
         ))}
       </nav>
-      
-      <div className="p-4 border-t border-border">
-        <div className="bg-tertiary rounded-lg p-4 text-sm border border-border">
-          <p className="text-secondary mb-2">Plan: <span className="text-primary font-semibold">Pro</span></p>
-          <div className="w-full bg-border h-1.5 rounded-full overflow-hidden">
-            <div className="bg-accent h-full w-[82%]" />
-          </div>
-          <p className="text-xs text-secondary mt-2">82k / 100k snapshots used</p>
-        </div>
-      </div>
     </aside>
   );
 };

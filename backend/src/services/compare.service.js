@@ -16,9 +16,9 @@ const resizeImage = (image, targetWidth, targetHeight) => {
         newImage.data[idx + 2] = image.data[oldIdx + 2];
         newImage.data[idx + 3] = image.data[oldIdx + 3];
       } else {
-        newImage.data[idx] = 0;
-        newImage.data[idx + 1] = 0;
-        newImage.data[idx + 2] = 0;
+        newImage.data[idx] = 255;
+        newImage.data[idx + 1] = 255;
+        newImage.data[idx + 2] = 255;
         newImage.data[idx + 3] = 0;
       }
     }
@@ -26,7 +26,7 @@ const resizeImage = (image, targetWidth, targetHeight) => {
   return newImage;
 };
 
-export const compareImages = (baselineBuffer, currentBuffer) => {
+export const compareImages = (baselineBuffer, currentBuffer, threshold = 0.1) => {
   const baseImg = PNG.sync.read(baselineBuffer);
   const currImg = PNG.sync.read(currentBuffer);
 
@@ -45,7 +45,7 @@ export const compareImages = (baselineBuffer, currentBuffer) => {
     maxWidth,
     maxHeight,
     {
-      threshold: 0.1,
+      threshold,
       includeAA: false,
       diffColor: [255, 0, 0],
       alpha: 0.2

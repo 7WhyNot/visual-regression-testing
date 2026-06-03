@@ -10,15 +10,29 @@ const resources = {
         reports: "Reports",
         settings: "Settings"
       },
+      header: {
+        profile: "My Profile",
+        workspace: "Workspace Settings",
+        switchLang: "Switch Language",
+        theme: "Theme",
+        themes: { light: "Light", dark: "Dark", hacker: "Hacker" },
+        logout: "Log Out",
+        notifications: "Notifications",
+        markAllRead: "Mark all as read",
+        noNotifications: "No new notifications"
+      },
       dashboard: {
         console: "VisionQA Console",
         overview: "Projects Overview",
+        overviewDesc: "Overview of your visual regression tests across all projects.",
         createBtn: "Create Project",
         total: "Total Projects",
-        success: "Successful Tests",
-        active: "Active Checks",
+        success: "Success Rate",
+        active: "Bugs Found",
+        savedHours: "Hours Saved",
+        recentActivity: "Recent Activity",
+        noActivity: "No recent activity",
         noProjects: "No projects yet",
-        coverage: "Test Coverage",
         created: "Created",
         modalTitle: "Create Project",
         modalDesc: "Add a new workspace for visual testing.",
@@ -26,12 +40,13 @@ const resources = {
         placeholder: "e.g., Marketing Website",
         cancel: "Cancel",
         creating: "Creating...",
-        create: "Create"
+        create: "Create",
+        testsCompleted: "Tests completed!"
       },
       project: {
         back: "Back to projects",
-        runTests: "Run tests",
-        running: "Browser is taking screenshots...",
+        runTests: "Trigger Manual Run",
+        running: "Running tests...",
         addScenario: "Add Scenario",
         scenarioName: "Component / Page Name",
         scenarioNamePh: "e.g., Home Page",
@@ -45,7 +60,11 @@ const resources = {
         runId: "Run ID",
         status: "Status",
         date: "Start Date",
-        noRuns: "No test runs yet"
+        noRuns: "No test runs yet",
+        ignoredSelectors: "Ignored Selectors (comma separated)",
+        ignoredDesc: "Elements matching these CSS selectors will be hidden before taking the screenshot.",
+        sensitivity: "Sensitivity (Threshold)",
+        sensitivityDesc: "Lower value means higher sensitivity to visual changes."
       },
       report: {
         back: "Back to project",
@@ -90,22 +109,58 @@ const resources = {
       },
       settings: {
         title: "System Settings",
-        desc: "Manage infrastructure configuration and testing parameters.",
-        dbTitle: "PostgreSQL Database",
-        host: "Host",
-        port: "Port",
-        dbName: "Database Name",
-        s3Title: "S3 Storage (MinIO)",
-        endpoint: "Endpoint",
-        bucket: "Bucket Name",
-        user: "Root User",
-        pass: "Password",
-        browserTitle: "Browser Engine",
-        threshold: "Allowed threshold (%)",
-        timeout: "Timeout (ms)",
-        save: "Save settings",
+        desc: "Manage your account, workspace, and infrastructure configurations.",
+        tabs: {
+          general: "General",
+          notifications: "Notifications",
+          api: "API & CI/CD",
+          team: "Team",
+          danger: "Danger Zone"
+        },
+        general: {
+          workspaceName: "Workspace Name",
+          timezone: "Timezone",
+          defaultLanguage: "Default Language"
+        },
+        notifs: {
+          email: "Email Notifications",
+          emailDesc: "Receive daily digests and failure alerts.",
+          slack: "Slack Integration",
+          slackDesc: "Post test results directly to your team channel.",
+          browser: "Browser Push",
+          browserDesc: "Get instant alerts when manual runs complete."
+        },
+        apiConfig: {
+          key: "API Key",
+          keyDesc: "Use this key to authenticate with our CI/CD runner.",
+          copy: "Copy Key",
+          copied: "Copied to clipboard!"
+        },
+        teamModule: {
+          name: "Name",
+          role: "Role",
+          admin: "Admin",
+          viewer: "Viewer",
+          qa: "QA Engineer"
+        },
+        dangerZone: {
+          deleteProject: "Delete Workspace",
+          deleteDesc: "Permanently remove your workspace and all visual test data.",
+          deleteBtn: "Delete Workspace"
+        },
+        save: "Save changes",
         saving: "Saving...",
         success: "Settings saved successfully"
+      },
+      feedback: {
+        title: "Send Feedback",
+        type: "Feedback Type",
+        types: { bug: "Bug Report", feature: "Feature Request", question: "Question" },
+        message: "Message",
+        messagePh: "Tell us what's on your mind...",
+        attach: "Attach Screenshot",
+        submit: "Submit Feedback",
+        success: "Thanks! Your feedback has been sent."
       }
     }
   },
@@ -116,15 +171,29 @@ const resources = {
         reports: "Отчеты",
         settings: "Настройки"
       },
+      header: {
+        profile: "Мой профиль",
+        workspace: "Настройки Workspace",
+        switchLang: "Сменить язык",
+        theme: "Тема",
+        themes: { light: "Светлая", dark: "Темная", hacker: "Хакер" },
+        logout: "Выйти",
+        notifications: "Уведомления",
+        markAllRead: "Прочитать всё",
+        noNotifications: "Нет новых уведомлений"
+      },
       dashboard: {
         console: "Консоль VisionQA",
         overview: "Обзор проектов",
+        overviewDesc: "Статистика и обзор ваших визуальных тестов по всем проектам.",
         createBtn: "Создать проект",
         total: "Всего проектов",
-        success: "Успешных тестов",
-        active: "Активных проверок",
+        success: "Успешность (Pass Rate)",
+        active: "Найдено багов",
+        savedHours: "Сэкономлено часов",
+        recentActivity: "Последняя активность",
+        noActivity: "Нет активности",
         noProjects: "У вас пока нет проектов",
-        coverage: "Покрытие проверками",
         created: "Создан",
         modalTitle: "Создать проект",
         modalDesc: "Добавьте рабочее пространство для визуальных проверок.",
@@ -132,7 +201,8 @@ const resources = {
         placeholder: "Например, Marketing Website",
         cancel: "Отмена",
         creating: "Создание...",
-        create: "Создать"
+        create: "Создать",
+        testsCompleted: "Тесты завершены!"
       },
       project: {
         back: "Назад к списку проектов",
@@ -151,7 +221,11 @@ const resources = {
         runId: "ID Прогона",
         status: "Статус",
         date: "Дата запуска",
-        noRuns: "Нет запущенных тестов"
+        noRuns: "Нет запущенных тестов",
+        ignoredSelectors: "Игнорируемые селекторы (через запятую)",
+        ignoredDesc: "Элементы по этим селекторам будут скрыты перед снимком.",
+        sensitivity: "Чувствительность (Threshold)",
+        sensitivityDesc: "Меньшее значение означает более высокую чувствительность к изменениям."
       },
       report: {
         back: "Назад к проекту",
@@ -196,22 +270,58 @@ const resources = {
       },
       settings: {
         title: "Настройки системы",
-        desc: "Управление конфигурацией инфраструктуры и параметров тестирования.",
-        dbTitle: "База данных PostgreSQL",
-        host: "Хост",
-        port: "Порт",
-        dbName: "Имя базы данных",
-        s3Title: "S3 Хранилище (MinIO)",
-        endpoint: "Endpoint",
-        bucket: "Bucket Name",
-        user: "Root User",
-        pass: "Password",
-        browserTitle: "Браузерный движок",
-        threshold: "Допустимая погрешность (%)",
-        timeout: "Таймаут (мс)",
-        save: "Сохранить настройки",
+        desc: "Управление аккаунтом, инфраструктурой и интеграциями.",
+        tabs: {
+          general: "Общие",
+          notifications: "Уведомления",
+          api: "API и CI/CD",
+          team: "Команда",
+          danger: "Опасная зона"
+        },
+        general: {
+          workspaceName: "Имя Workspace",
+          timezone: "Часовой пояс",
+          defaultLanguage: "Язык по умолчанию"
+        },
+        notifs: {
+          email: "Email уведомления",
+          emailDesc: "Получать ежедневные отчеты и алерты об ошибках.",
+          slack: "Интеграция со Slack",
+          slackDesc: "Отправлять результаты прямо в канал вашей команды.",
+          browser: "Push в браузере",
+          browserDesc: "Мгновенные уведомления о завершении тестов."
+        },
+        apiConfig: {
+          key: "API Ключ",
+          keyDesc: "Используйте этот ключ для CI/CD раннеров (GitHub Actions, GitLab CI).",
+          copy: "Скопировать ключ",
+          copied: "Скопировано в буфер!"
+        },
+        teamModule: {
+          name: "Имя",
+          role: "Роль",
+          admin: "Админ",
+          viewer: "Наблюдатель",
+          qa: "QA Инженер"
+        },
+        dangerZone: {
+          deleteProject: "Удалить Workspace",
+          deleteDesc: "Безвозвратно удаляет воркспейс и все тестовые данные из БД и S3.",
+          deleteBtn: "Удалить Workspace"
+        },
+        save: "Сохранить изменения",
         saving: "Сохранение...",
         success: "Настройки успешно сохранены"
+      },
+      feedback: {
+        title: "Оставить отзыв",
+        type: "Тип сообщения",
+        types: { bug: "Сообщить о баге", feature: "Запросить фичу", question: "Вопрос" },
+        message: "Сообщение",
+        messagePh: "Расскажите нам о проблеме или идее...",
+        attach: "Прикрепить скриншот",
+        submit: "Отправить",
+        success: "Спасибо! Ваш отзыв успешно отправлен."
       }
     }
   }
