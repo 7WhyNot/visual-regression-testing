@@ -1,64 +1,53 @@
-import { Camera, LayoutGrid, Settings } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
-
-const navigationItems = [
-  {
-    label: "Проекты",
-    path: "/",
-    icon: LayoutGrid
-  },
-  {
-    label: "Настройки",
-    path: "/settings",
-    icon: Settings
-  }
-];
+import { useTranslation } from "react-i18next";
+import { LayoutDashboard, Settings, FileText } from "lucide-react";
+import { motion } from "framer-motion";
 
 const Sidebar = () => {
+  const { t } = useTranslation();
   const location = useLocation();
 
-  const isActivePath = (path) => {
-    if (path === "/") {
-      return location.pathname === "/" || location.pathname.startsWith("/project") || location.pathname.startsWith("/run");
-    }
-
-    return location.pathname === path;
-  };
+  const navItems = [
+    { id: "projects", path: "/", icon: LayoutDashboard, label: t("nav.projects") },
+    { id: "reports", path: "/reports", icon: FileText, label: t("nav.reports") },
+    { id: "settings", path: "/settings", icon: Settings, label: t("nav.settings") }
+  ];
 
   return (
-    <aside className="flex h-screen w-72 shrink-0 flex-col overflow-hidden bg-gray-900 text-gray-100 shadow-2xl">
-      <div className="flex h-20 items-center border-b border-white/10 px-6">
-        <Link to="/" className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-500/15 text-indigo-300 ring-1 ring-indigo-400/30">
-            <Camera className="h-6 w-6" />
-          </div>
-          <span className="bg-gradient-to-r from-indigo-300 via-sky-200 to-cyan-300 bg-clip-text text-xl font-bold text-transparent">
-            VisionQA
-          </span>
-        </Link>
+    <aside className="flex h-screen w-64 flex-col border-r border-gray-200 bg-gray-50/50 transition-colors dark:border-gray-800 dark:bg-gray-900/50">
+      <div className="flex h-16 items-center px-6">
+        <span className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-xl font-black tracking-tight text-transparent">
+          VRT Platform
+        </span>
       </div>
 
-      <nav className="flex-1 space-y-2 px-4 py-6">
-        {navigationItems.map((item) => {
+      <nav className="flex-1 space-y-1 px-4 py-4">
+        {navItems.map((item) => {
+          const isActive = location.pathname === item.path || (item.path !== "/" && location.pathname.startsWith(item.path));
           const Icon = item.icon;
-          const isActive = isActivePath(item.path);
 
           return (
             <Link
-              key={item.path}
+              key={item.id}
               to={item.path}
-              className={`group flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200 ${
-                isActive
-                  ? "bg-indigo-600 text-white shadow-lg shadow-indigo-950/30"
-                  : "text-gray-300 hover:bg-white/10 hover:text-white"
+              className={`group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors ${
+                isActive ? "text-indigo-600 dark:text-indigo-400" : "text-gray-600 hover:text-gray-950 dark:text-gray-400 dark:hover:text-gray-100"
               }`}
             >
-              <Icon
-                className={`h-5 w-5 transition-transform duration-200 ${
-                  isActive ? "scale-105" : "group-hover:translate-x-1 group-hover:scale-105"
-                }`}
-              />
-              <span>{item.label}</span>
+              {isActive && (
+                <motion.div
+                  layoutId="sidebar-active"
+                  className="absolute inset-0 rounded-xl bg-indigo-50 shadow-[0_0_15px_rgba(99,102,241,0.5)] dark:bg-indigo-500/10"
+                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                />
+              )}
+              
+              <div className="relative z-10 flex items-center gap-3">
+                <motion.div whileHover={{ y: -2 }} transition={{ type: "spring", stiffness: 400 }}>
+                  <Icon className="h-5 w-5" />
+                </motion.div>
+                <span>{item.label}</span>
+              </div>
             </Link>
           );
         })}
